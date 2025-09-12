@@ -13,12 +13,16 @@ Recibo_RE = r"(?i)(recibo|factura|dudas de mi recibo|mi factura|cobro)"
 Reporte_RE = r"(?i)(reporte|fallas|problema|no funciona|sin servicio)"
 Seguimiento_RE = r"(?i)(seguimiento|estatus de mi reporte|ver avance)"
 
-afirmacion_RE = r"(?i)(sí|claro|gracias|por supuesto|ok|dale)"
+negacion_RE = r"(?i)(no|nunca|jamás|negativo|nop|na|n/nel/nope|no gracias|no, gracias|es todo/eso es todo|nada más|nada|no más|no, nada más|no, nada|no, no más)"
+afirmacion_RE = r"(?i)(sí|claro|gracias|por supuesto|ok|dale|vale|bueno|perfecto|claro que sí|si|afirmativo/sí por favor/si, por favor/sí, por favor)"
 salir_RE = r"(?i)(salir|adiós|me equivoqué|perdón|cancelar|terminar)"
 
 
 state = 0
 Salida = 1
+
+Falla_Internet_RE = r"(?i)(internet lento|sin internet|falla conexión|caída|no carga páginas|desconexión|internet|no conecta|no tengo internet)"
+Falla_Telefono_RE = r"(?i)(sin tono|línea muerta|ruido|interferencia/no funciona|no marca|teléfono|no tengo línea|no hay tono/no me permiten hacer llamadas/no tengo línea/no puedo llamar/no permite recibir llamadas)"
 
 
 while Salida:
@@ -74,7 +78,46 @@ while Salida:
         state = 90
 
     if state == 7:
-        print("Hemos registrado tu reporte de falla. Un técnico lo revisará en las próximas 24 horas.")
+        print("\nPor favor, selecciona un numero para el tipo de reporte:")
+        print("1. Fallas de Internet")
+        print("2. Fallas de Telefonía")
+        
+        tipo_falla = input("\n¿Qué tipo de falla deseas reportar? (1/2): ")
+        
+        if tipo_falla == "1":
+            print("\n¿Qué problema tienes con tu internet?")
+            print("Problemas comunes:")
+            print("- Internet lento")
+            print("- Sin internet")
+            print("- Falla conexión")
+            detalle = input("\nDescribe la falla: ")
+            if re.findall(Falla_Internet_RE, detalle):
+                print("\nRealizando diagnóstico de tu conexión...")
+                time.sleep(2)
+                print("He registrado tu reporte de falla de internet.")
+                print("Número de reporte: INT-" + str(datetime.now().strftime("%Y%m%d%H")))
+            else:
+                print("No pude identificar el tipo específico de falla, pero registraré tu reporte.")
+        
+        elif tipo_falla == "2":
+            print("\n¿Qué problema tienes con tu teléfono?")
+            print("Problemas comunes:")
+            print("- Sin tono")
+            print("- Línea muerta")
+            print("- Ruido o interferencia")
+            detalle = input("\nDescribe la falla: ")
+            if re.findall(Falla_Telefono_RE, detalle):
+                print("\nRealizando diagnóstico de tu línea telefónica...")
+                time.sleep(2)
+                print("He registrado tu reporte de falla de telefonía.")
+                print("Número de reporte: TEL-" + str(datetime.now().strftime("%Y%m%d%H")))
+            else:
+                print("No pude identificar el tipo específico de falla, pero registraré tu reporte.")
+        
+        else:
+            print("\nOpción no válida. Registraré un reporte general.")
+        
+        print("\nUn técnico revisará tu caso en las próximas 24 horas.")
         state = 90
 
     if state == 8:
@@ -85,11 +128,12 @@ while Salida:
         opcion = input("¿Te puedo ayudar en algo más? (sí/no)\n")
         if re.findall(afirmacion_RE, opcion):
             state = 0
-        elif re.findall(salir_RE, opcion):
+        elif re.findall(negacion_RE, opcion) or re.findall(salir_RE, opcion):
             state = 99
         else:
-            print("No entendí tu respuesta, regresando al menú principal.")
-            state = 0
+            print("No entendí tu respuesta.")
+            print("Por favor responde 'sí' para continuar o 'no' para salir.")
+            state = 90
 
     if state == 99:
         print("Gracias fue un placer atenderte. ¡Hasta luego!")
