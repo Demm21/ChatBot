@@ -278,19 +278,103 @@ while Salida:
 
     if state == 8:
         print("\nSEGUIMIENTO DE TU REPORTE")
-        print("Déjame revisar el estatus actual de tu caso...")
-        time.sleep(2)
-        print("\nINFORMACIÓN ACTUALIZADA:")
-        print("   • Tu reporte está EN PROCESO")
-        print("   • Diagnóstico: Completado ✓")
-        print("   • Solución identificada: ✓")
-        print("   • Técnico asignado: Juan Pérez (ID: 12345)")
-        print("\n VISITA PROGRAMADA:")
-        print("   • Fecha: Hoy")
-        print("   • Horario estimado: 2:00 PM - 6:00 PM")
-        print("   • El técnico te llamará 30 min antes")
-        print("\n Cualquier cambio te será notificado por SMS")
-        state = 90
+        folio_in = input("Para ayudarte, indícame tu folio TLX-AAAA-###### o tu número de contacto/cuenta: ")
+
+        folio = None
+        folio_match = re.match(r"(?i)^\s*TLX-(\d{4})-(\d{6})\s*$", folio_in or "")
+        if folio_match:
+            folio = f"TLX-{folio_match.group(1)}-{folio_match.group(2)}"
+        else:
+            digits = re.sub(r"\D", "", folio_in or "")
+            if len(digits) >= 7:
+                folio = f"TLX-{datetime.now().year}-{digits[-6:].zfill(6)}"
+            else:
+                print("No logré identificar un folio o referencia válido.")
+                print("Intenta nuevamente con tu folio o un número de cuenta/teléfono asociado.")
+                state = 8
+                
+        if folio:
+            print("\nConsultando el estatus de tu reporte, por favor espera...")
+            time.sleep(1)
+
+            seed = int(re.sub(r"\D", "", folio)[-6:])
+            slot = "9:00 AM - 1:00 PM" if seed % 2 == 0 else "2:00 PM - 6:00 PM"
+            techs = [
+                "Juan Pérez (ID: 12345)",
+                "María López (ID: 23456)",
+                "Carlos Ruiz (ID: 34567)",
+                "Ana Gómez (ID: 45678)"
+            ]
+            tecnico = techs[seed % len(techs)]
+
+            diag = "Completado ✓" if seed % 3 != 0 else "En curso"
+            solucion = "Identificada ✓" if seed % 4 != 0 else "En análisis"
+            visita_dia = "Hoy" if datetime.now().hour < 12 else "Mañana"
+
+            print("\nINFORMACIÓN DEL REPORTE:")
+            print(f"   • Folio: {folio}")
+            print("   • Estatus: EN PROCESO")
+            print(f"   • Diagnóstico: {diag}")
+            print(f"   • Solución: {solucion}")
+            print(f"   • Técnico asignado: {tecnico}")
+            print("\n VISITA PROGRAMADA:")
+            print(f"   • Fecha: {visita_dia}")
+            print(f"   • Horario estimado: {slot}")
+            print("   • El técnico te llamará 30 min antes")
+
+            print("\nOpciones de seguimiento:")
+            print("   1) Reprogramar visita")
+            print("   2) Actualizar medio de contacto")
+            print("   3) Agregar notas para el técnico")
+            print("   4) Cancelar el reporte")
+            print("   5) Volver al inicio")
+
+            accion = input("¿Qué deseas hacer? (1/2/3/4/5 o escribe la opción): ")
+
+            if re.search(r"(?i)^(1|reprogram)", accion or ""):
+                nueva_fecha = input("Nueva fecha (DD/MM/AAAA): ")
+                nuevo_horario = input("Horario preferente (mañana/tarde o 9-13/14-18): ")
+                print("\nHe solicitado la reprogramación de tu visita:")
+                print(f"   • Folio: {folio}")
+                print(f"   • Fecha: {nueva_fecha}")
+                print(f"   • Horario: {nuevo_horario}")
+                print("Recibirás confirmación por SMS/Email en breve.")
+                state = 90
+
+            elif re.search(r"(?i)^(2|actualizar|contacto)", accion or ""):
+                prefer = input("¿Prefieres actualizar teléfono o correo?: ")
+                if re.search(r"(?i)tel|cel|m[oó]vil|whats|wa", prefer or ""):
+                    nuevo_tel = input("Nuevo teléfono (10 dígitos): ")
+                    print("Contacto actualizado. Usaremos este teléfono para avisos de tu reporte.")
+                else:
+                    nuevo_mail = input("Nuevo correo: ")
+                    print("Contacto actualizado. Usaremos este correo para avisos de tu reporte.")
+                state = 90
+
+            elif re.search(r"(?i)^(3|nota|agregar)", accion or ""):
+                nota = input("Escribe la nota que quieres que el técnico vea: ")
+                print("\nNota agregada a tu folio correctamente.")
+                print(f"   • Folio: {folio}")
+                state = 90
+
+            elif re.search(r"(?i)^(4|cancel)", accion or ""):
+                conf = input("¿Seguro que deseas cancelar el reporte? (sí/no): ")
+                if re.findall(afirmacion_RE, conf or ""):
+                    print("\nTu reporte ha sido cancelado. Si el problema persiste, puedes generar uno nuevo en cualquier momento.")
+                    print(f"   • Folio cancelado: {folio}")
+                    state = 90
+                elif re.findall(salir_RE, conf or ""):
+                    print("No cancelaré el reporte. Seguimos monitoreando su avance.")
+                    state = 90
+                else:
+                    print("No logré entender tu respuesta. Mantendré el reporte activo.")
+                    state = 90
+
+            elif re.search(r"(?i)^(5|volver|inicio|menu|menú)", accion or ""):
+                state = 90
+            else:
+                print("No logré entender tu respuesta. Te regreso al menú de seguimiento.")
+                state = 8
 
     # Nuevos estados agregados
     if state == 9:
