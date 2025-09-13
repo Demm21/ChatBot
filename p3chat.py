@@ -216,18 +216,65 @@ while Salida:
 
     if state == 7:
         print("\nREPORTE DE FALLAS")
-        print("Lamento mucho los inconvenientes que estás experimentando")
-        print("\nHe registrado tu reporte de falla con los siguientes datos:")
-        print(f"   • Fecha y hora: {datetime.now().strftime('%d/%m/%Y %H:%M')}")
-        print("   • Folio de seguimiento: TLX-2024-" + str(int(time.time()))[-6:])
-        print("   • Prioridad: Alta")
-        print("\nPROCESO DE ATENCIÓN:")
-        print("   • Diagnóstico remoto: Inmediato")
-        print("   • Revisión técnica: Máximo 24 horas")
-        print("   • Visita técnica (si es necesaria): 24-48 horas")
-        print("\nRecibirás SMS con actualizaciones del progreso")
-        print("Para seguimiento inmediato: 800-123-2222")
-        state = 90
+        print("Lamento mucho los inconvenientes que estás experimentando.")
+        confirmar = input("\n¿Deseas que levante un reporte técnico ahora? (sí/no): ")
+
+        if re.findall(afirmacion_RE, confirmar):
+            ref = input("\nPerfecto. Por favor indícame tu número Telmex o número de cuenta: ")
+            ref_digits = re.sub(r"\D", "", ref)
+            if len(ref_digits) < 7:
+                print("El dato parece incompleto, continuaré con la información disponible.")
+
+            direccion = input("¿En qué domicilio se presenta la falla? (calle y colonia/ciudad): ")
+            descripcion = input("Describe brevemente la falla (sin servicio, lento, ruido en línea, etc.): ")
+            horario = input("¿Cuál es el mejor horario para visita? (mañana/tarde/noche o 9-14/14-18): ")
+
+            contacto_tipo = input("¿Prefieres contacto por teléfono o por correo? ")
+            contacto_valor = ""
+            if re.search(r"(?i)tel[eé]fono|cel|m[oó]vil|whats|wa", contacto_tipo):
+                contacto_valor = input("Indícame tu número de contacto (10 dígitos): ")
+                tel_digits = re.sub(r"\D", "", contacto_valor)
+                if len(tel_digits) != 10:
+                    print("El número no parece de 10 dígitos; usaré el proporcionado.")
+            else:
+                contacto_valor = input("Indícame tu correo de contacto: ")
+                if not ("@" in contacto_valor and "." in contacto_valor):
+                    print("El correo no parece válido; usaré el proporcionado.")
+
+            print("\nResumen de tu reporte:")
+            print(f"   • Referencia (línea/cuenta): {ref}")
+            print(f"   • Domicilio: {direccion}")
+            print(f"   • Falla: {descripcion}")
+            print(f"   • Horario preferente: {horario}")
+            print(f"   • Contacto: {contacto_valor}")
+
+            confirmar_final = input("\n¿Confirmas levantar el reporte con esta información? (sí/no): ")
+            if re.findall(afirmacion_RE, confirmar_final):
+                folio = "TLX-" + str(datetime.now().year) + "-" + str(int(time.time()))[-6:]
+                print("\n¡Listo! He registrado tu reporte de falla:")
+                print(f"   • Fecha y hora: {datetime.now().strftime('%d/%m/%Y %H:%M')}")
+                print(f"   • Folio de seguimiento: {folio}")
+                print("   • Prioridad: Alta")
+                print("\nPROCESO DE ATENCIÓN:")
+                print("   • Diagnóstico remoto: Inmediato")
+                print("   • Revisión técnica: Máximo 24 horas")
+                print("   • Visita técnica (si es necesaria): 24-48 horas")
+                print("\nRecibirás SMS o llamada con actualizaciones del progreso.")
+                print("Para seguimiento inmediato puedes llamar al 800-123-2222 y proporcionar tu folio.")
+                state = 90
+            elif re.findall(salir_RE, confirmar_final) or re.findall(r"(?i)(no|no gracias|mejor después|luego)", confirmar_final):
+                print("Entendido, no levantaré el reporte por ahora. Si lo deseas, puedo ayudarte en otro tema.")
+                state = 90
+            else:
+                print("No logré entender tu respuesta. Te regreso al menú de reportes.")
+                state = 7
+
+        elif re.findall(salir_RE, confirmar) or re.findall(r"(?i)(no|no gracias|no por ahora|luego)", confirmar):
+            print("No hay problema. Si cambias de opinión, puedo levantar el reporte cuando gustes.")
+            state = 90
+        else:
+            print("No logré entender tu respuesta. Te regreso al menú de reportes.")
+            state = 7
 
     if state == 8:
         print("\nSEGUIMIENTO DE TU REPORTE")
