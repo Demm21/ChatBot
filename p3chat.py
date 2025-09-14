@@ -48,11 +48,13 @@ Tarjeta_RE = r"(?i)(tarjeta|crédito|credito|débito|debito|visa|mastercard|mast
 Transferencia_RE = r"(?i)(transferencia|transferencia bancaria|banco|depósito|deposito|spei|clabe|interbancaria|app del banco|bancaria|pago digital)"
 Efectivo_RE = r"(?i)(efectivo|oxxo|7eleven|7 eleven|farmacias|tienda|super|supermercado|conveniencia|en persona|pago en tienda|en tienda|a la mano|cash|en cualquier tienda)"
 Numero_RE = r"\b[1-3]\b"
+Domiciliacion_RE = r"(?i)(domiciliar|automático|autom[áa]tico|autom[áa]ticamente|recurrente|permanentemente|cada mes|mensual|pago futuro|futuros pagos|guardar|guardar tarjeta|recordar)"
 
 # Estados específicos para pago
 state_pago = 0
 monto_pago = 0
 referencia_pago = ""
+tarjeta_domiciliada = False
 
 state = 0
 Salida = 1
@@ -110,6 +112,7 @@ while Salida:
             state = 3
         elif re.findall(Pago_RE, opcion):
             state = 4
+            state_pago = 40
         elif re.findall(Convenio_RE, opcion):
             state = 5
         elif re.findall(Recibo_RE, opcion):
@@ -187,7 +190,7 @@ while Salida:
 
     if state == 4:
         if state_pago == 40:
-            print("\n¡Claro! Te ayudo con tu pago.")
+            print("\nPAGO DE SERVICIO")
             referencia_input = input(" Para empezar, por favor ingresa tu número de referencia de Telmex: ")
             referencia_match = re.search(Referencia_RE, referencia_input)
             if referencia_match:
@@ -223,6 +226,24 @@ while Salida:
                 time.sleep(2)
                 print("Pago procesado exitosamente")
                 print(f"Número de transacción: PAG-{datetime.now().strftime('%Y%m%d%H%M%S')}")
+                
+                # Preguntar por domiciliación para pagos futuros
+                print("\n¿Te gustaría domiciliar este método de pago para futuros pagos?")
+                print("Así tus pagos se realizarán automáticamente cada mes.")
+                domiciliar_input = input("(sí/no): ")
+                
+                if re.findall(afirmacion_RE, domiciliar_input) or re.findall(Domiciliacion_RE, domiciliar_input):
+                    print("\n¡Excelente! Hemos registrado tu tarjeta para pagos automáticos.")
+                    print("Cada mes, tu pago se realizará automáticamente con esta tarjeta.")
+                    print("Recibirás una notificación por correo antes de cada cargo.")
+                    tarjeta_domiciliada = True
+                elif re.findall(negacion_RE, domiciliar_input):
+                    print("\nDe acuerdo, no domiciliaremos tu tarjeta.")
+                    print("Podrás realizar tus pagos manualmente cada mes.")
+                else:
+                    print("\nNo entendí tu respuesta. No domiciliaremos tu tarjeta por ahora.")
+                    print("Puedes configurar la domiciliación más adelante si lo deseas.")
+                
                 state_pago = 43
             elif re.findall(Transferencia_RE, metodo_input) or re.search(Numero_RE, metodo_input) and re.search(r"\b2\b", metodo_input):
                 print("\nDatos para transferencia:")
@@ -247,32 +268,30 @@ while Salida:
                 print("No pude identificar tu método de pago. Por favor selecciona 1, 2 o 3.")
                 
         elif state_pago == 43:
-            while True:
-                print(f"\n¿Deseas recibir el comprobante de pago de ${monto_pago:.2f} por correo?")
-                respuesta = input("(sí/no): ")
-                
-                if re.findall(afirmacion_RE, respuesta):
-                    while True: 
-                        email_input = input("Por favor ingresa tu correo electrónico: ")
-                        if re.fullmatch(Email_RE, email_input):
-                            print(f"Comprobante enviado a {email_input}")
-                            break
-                        else:
-                            print("El correo electrónico no es válido. Por favor, intenta de nuevo.")
-                    break 
-                    
-                elif re.findall(negacion_RE, respuesta):
-                    print("De acuerdo, no se enviará comprobante.")
-                    break
-                    
-                else:
-                    print("No entendí tu respuesta.")
-                    print("Por favor responde 'sí' para continuar o 'no' para salir.")
+            email_input = input("\n¿Deseas recibir el comprobante de pago por correo electrónico? (sí/no): ")
             
-            print("¡Gracias por tu pago!")
+            if re.findall(afirmacion_RE, email_input):
+                while True:
+                    email_pago = input("Ingresa tu correo electrónico: ")
+                    email_match = re.search(Email_RE, email_pago)
+                    if email_match:
+                        print(f"\nComprobante enviado a {email_pago}")
+                        print("Revisa tu bandeja de entrada en los próximos minutos.")
+                        break
+                    else:
+                        print("El formato del correo no es válido. Por favor, ingresa un correo válido.")
+            
+            print("\n¡Gracias por tu pago!")
+            print("Tu servicio continuará activo sin interrupciones.")
+            
+            if tarjeta_domiciliada:
+                print("\nRecuerda que hemos registrado tu tarjeta para pagos automáticos.")
+                print("No necesitarás realizar el pago manualmente cada mes.")
+            
+            print("Si tienes más preguntas, estoy aquí para ayudarte.")
+            state_pago = 0
             state = 90
-            state_pago = 0 
-
+            
     if state == 5:
         print("\nCONVENIOS Y FACILIDADES DE PAGO")
         print("Entendemos que a veces necesitas flexibilidad para pagar")
