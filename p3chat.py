@@ -133,6 +133,7 @@ while Salida:
         print("   (Precio regular $649 - Netflix incluido sin costo extra)")
         print("\n4. Paquete Empresarial Premium - $1,299/mes por 6 meses")
         print("   Internet 500 Mbps + líneas telefónicas ilimitadas")
+        print("Esto es una prueba para comprobar funcionamiento de Git.")
         
         opcion_promo = input("\n¿Alguna de estas promociones te llama la atención?(sí/no): ")
         
