@@ -17,13 +17,25 @@ negacion_RE = r"(?i)(no|nunca|jamás|negativo|nop|na|n/nel/nope|no gracias|no, g
 afirmacion_RE = r"(?i)(sí|claro|gracias|por supuesto|ok|dale|vale|bueno|perfecto|claro que sí|si|afirmativo/sí por favor/si, por favor/sí, por favor)"
 salir_RE = r"(?i)(salir|adiós|me equivoqué|perdón|cancelar|terminar)"
 
-
 state = 0
 Salida = 1
 
 Falla_Internet_RE = r"(?i)(internet lento|sin internet|falla conexión|caída|no carga páginas|desconexión|internet|no conecta|no tengo internet)"
 Falla_Telefono_RE = r"(?i)(sin tono|línea muerta|ruido|interferencia/no funciona|no marca|teléfono|no tengo línea|no hay tono/no me permiten hacer llamadas/no tengo línea/no puedo llamar/no permite recibir llamadas)"
 
+# Expresiones para el módulo de pago
+Referencia_RE = r"\b\d{8,12}\b"
+Monto_RE = r"\$?\s*(\d+(?:\.\d{1,2})?)"
+Email_RE = r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b"
+Tarjeta_RE = r"(?i)(tarjeta|crédito|credito|débito|debito|visa|mastercard|master card|amex|american express|pagar con tarjeta|plástico)"
+Transferencia_RE = r"(?i)(transferencia|transferencia bancaria|banco|depósito|deposito|spei|clabe|interbancaria|app del banco|bancaria|pago digital)"
+Efectivo_RE = r"(?i)(efectivo|oxxo|7eleven|7 eleven|farmacias|tienda|super|supermercado|conveniencia|en persona|pago en tienda|en tienda|a la mano|cash|en cualquier tienda)"
+Numero_RE = r"\b[1-3]\b"
+
+# Estados específicos para pago
+state_pago = 0
+monto_pago = 0
+referencia_pago = ""
 
 while Salida:
     if state == 0:
@@ -65,9 +77,69 @@ while Salida:
         print("Tu saldo actual fue enviado a tu correo electronico.")
         state = 90
 
-    if state == 4:
-        print("Puedes realizar tu pago en línea con tarjeta o en tiendas autorizadas.")
-        state = 90
+    elif state_pago == 42:
+            print(f"\nConfirmado: Vas a pagar ${monto_pago:.2f} para la referencia {referencia_pago}")
+            print("¿Cómo deseas realizar tu pago?")
+            print("1. Tarjeta de crédito/débito")
+            print("2. Transferencia bancaria")
+            print("3. Efectivo en tiendas")
+            
+            metodo_input = input("\nSelecciona una opción (1-3) o describe tu método preferido: ")
+            
+            if re.findall(Tarjeta_RE, metodo_input) or re.search(Numero_RE, metodo_input) and re.search(r"\b1\b", metodo_input):
+                print("\nSerás redirigido a nuestro portal seguro de pagos con tarjeta...")
+                time.sleep(2)
+                print("Pago procesado exitosamente")
+                print(f"Número de transacción: PAG-{datetime.now().strftime('%Y%m%d%H%M%S')}")
+                state_pago = 43
+            elif re.findall(Transferencia_RE, metodo_input) or re.search(Numero_RE, metodo_input) and re.search(r"\b2\b", metodo_input):
+                print("\nDatos para transferencia:")
+                print("Banco: BBVA")
+                print("CLABE: 012 180 00123456789 1")
+                print("Beneficiario: TELMEX SA DE CV")
+                print(f"Referencia: {referencia_pago}")
+                print(f"Monto: ${monto_pago:.2f}")
+                print("\nUna vez realizada la transferencia, tu pago se reflejará en 24-48 horas.")
+                state_pago = 43
+            elif re.findall(Efectivo_RE, metodo_input) or re.search(Numero_RE, metodo_input) and re.search(r"\b3\b", metodo_input):
+                print("\nPuedes pagar en efectivo en:")
+                print("- OXXO")
+                print("- 7-Eleven")
+                print("- Farmacias del Ahorro")
+                print("- Supermercados participantes")
+                print(f"\nReferencia: {referencia_pago}")
+                print(f"Monto: ${monto_pago:.2f}")
+                print("Tu pago se procesará en cuanto se realice el depósito.")
+                state_pago = 43
+            else:
+                print("No pude identificar tu método de pago. Por favor selecciona 1, 2 o 3.")
+                
+        elif state_pago == 43:
+            while True:
+                print(f"\n¿Deseas recibir el comprobante de pago de ${monto_pago:.2f} por correo?")
+                respuesta = input("(sí/no): ")
+                
+                if re.findall(afirmacion_RE, respuesta):
+                    while True: 
+                        email_input = input("Por favor ingresa tu correo electrónico: ")
+                        if re.fullmatch(Email_RE, email_input):
+                            print(f"Comprobante enviado a {email_input}")
+                            break
+                        else:
+                            print("El correo electrónico no es válido. Por favor, intenta de nuevo.")
+                    break 
+                    
+                elif re.findall(negacion_RE, respuesta):
+                    print("De acuerdo, no se enviará comprobante.")
+                    break
+                    
+                else:
+                    print("No entendí tu respuesta.")
+                    print("Por favor responde 'sí' para continuar o 'no' para salir.")
+            
+            print("¡Gracias por tu pago!")
+            state = 90
+            state_pago = 0 
 
     if state == 5:
         print(" Podemos ofrecerte un convenio de pago a 3 o 6 meses sin intereses.")
