@@ -166,15 +166,44 @@ while Salida:
 
     if state == 3:
         print("\nCONSULTA DE SALDO")
-        print("He enviado tu estado de cuenta actualizado a tu correo electrónico registrado.")
-        print("Incluye:")
-        print("   • Saldo actual")
-        print("   • Fecha de vencimiento")
-        print("   • Desglose de servicios")
-        print("   • Formas de pago disponibles")
-        print("\nSi no lo recibes en 5 minutos, revisa tu carpeta de spam.")
-        print("Para dudas inmediatas llama al 800-123-2222")
-        state = 90
+        print("Puedo enviarte tu estado de cuenta DETALLADO por correo electrónico.")
+        confirmar_envio = input("¿Deseas recibirlo ahora? (sí/no): ")
+
+        if re.findall(afirmacion_RE, confirmar_envio):
+            # Solicitar y validar correo electrónico
+            email_destino = None
+            while True:
+                posible = input("Escribe el correo donde quieres recibirlo: ")
+                if re.search(Email_RE, posible or ""):
+                    email_destino = posible
+                    break
+                reintentar = input("El formato no parece válido. ¿Intentar de nuevo? (sí/no): ")
+                if not re.findall(afirmacion_RE, reintentar or ""):
+                    break
+
+            if email_destino:
+                periodo = input("Opcional: periodo a consultar (MM/AAAA). Deja vacío para el actual: ")
+                print(f"\nPerfecto, enviaré tu estado de cuenta detallado a {email_destino}.")
+                print("Contenido del envío:")
+                print("   • Saldo actual con fecha de corte")
+                print("   • Pagos recibidos y pendientes")
+                print("   • Detalle de cargos y bonificaciones")
+                print("   • Consumos por servicio (internet/teléfono/TV)")
+                print("   • Formas de pago y línea de captura")
+                if (periodo or "").strip():
+                    print(f"   • Periodo solicitado: {periodo}")
+                state = 90
+            else:
+                print("\nDe acuerdo, no realizaré el envío por correo.")
+                print("Si lo deseas más tarde, vuelve a pedirme 'consulta de saldo'.")
+                state = 90
+
+        elif re.findall(salir_RE, confirmar_envio) or re.findall(r"(?i)(no|luego|despu[eé]s)", confirmar_envio or ""):
+            print("De acuerdo. Si más tarde deseas el envío, pídeme 'consulta de saldo'.")
+            state = 90
+        else:
+            print("No logré entender tu respuesta. Vamos a intentarlo de nuevo.")
+            state = 3
 
     if state == 4:
         if state_pago == 40:
