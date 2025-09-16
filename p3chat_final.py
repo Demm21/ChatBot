@@ -342,29 +342,64 @@ while Salida:
         confirmar = input("\n¿Deseas que levante un reporte técnico ahora? (sí/no): ")
 
         if re.findall(afirmacion_RE, confirmar):
-            ref = input("\nPerfecto. Por favor indícame tu número Telmex o número de cuenta: ")
-            ref_digits = re.sub(r"\D", "", ref)
-            if len(ref_digits) < 7:
-                print("El dato parece incompleto, continuaré con la información disponible.")
+            # Referencia 8-12 dígitos obligatoria
+            ref = ""
+            ref_digits = ""
+            while True:
+                ref = input("\nPerfecto. Indica tu número Telmex o número de cuenta (8 a 12 dígitos): ")
+                # Cancelación explícita (evita falsos positivos por 'no' dentro de palabras)
+                if re.search(r"(?i)^\s*(salir|cancelar|terminar|ya no|nada m[aá]s|eso es todo|no)\s*$", ref or ""):
+                    print("De acuerdo, no levantaré el reporte por ahora.")
+                    state = 90
+                    break
+                ref_digits = re.sub(r"\D", "", ref or "")
+                if 8 <= len(ref_digits) <= 12:
+                    print("Referencia válida ✓")
+                    break
+                else:
+                    print("La referencia debe tener entre 8 y 12 dígitos. Intenta nuevamente o escribe 'cancelar'.")
+            if state == 90:
+                # Usuario canceló durante la referencia
+                continue
 
             direccion = input("¿En qué domicilio se presenta la falla? (calle y colonia/ciudad): ")
             descripcion = input("Describe brevemente la falla (sin servicio, lento, ruido en línea, etc.): ")
             horario = input("¿Cuál es el mejor horario para visita? (mañana/tarde/noche o 9-14/14-18): ")
 
-            contacto_tipo = input("¿Prefieres contacto por teléfono o por correo? ")
+            # Validación de medio de contacto
             contacto_valor = ""
-            if re.search(r"(?i)tel[eé]fono|cel|m[oó]vil|whats|wa", contacto_tipo):
-                contacto_valor = input("Indícame tu número de contacto (10 dígitos): ")
-                tel_digits = re.sub(r"\D", "", contacto_valor)
-                if len(tel_digits) != 10:
-                    print("El número no parece de 10 dígitos; usaré el proporcionado.")
-            else:
-                contacto_valor = input("Indícame tu correo de contacto: ")
-                if not ("@" in contacto_valor and "." in contacto_valor):
-                    print("El correo no parece válido; usaré el proporcionado.")
+            while True:
+                contacto_tipo = input("¿Prefieres contacto por teléfono o por correo?: ")
+                # Cancelación explícita (evita que 'teléfono' coincida por 'no')
+                if re.search(r"(?i)^\s*(salir|cancelar|terminar|ya no|nada m[aá]s|eso es todo|no)\s*$", contacto_tipo or ""):
+                    print("De acuerdo, no levantaré el reporte por ahora.")
+                    state = 90
+                    break
+                if re.search(r"(?i)tel[eé]fono|cel|m[oó]vil|whats|wa", contacto_tipo or ""):
+                    telefono = input("Indícame tu número de contacto (10 dígitos): ")
+                    tel_digits = re.sub(r"\D", "", telefono or "")
+                    if len(tel_digits) == 10:
+                        contacto_valor = tel_digits
+                        print("Número válido ✓")
+                        break
+                    else:
+                        print("El teléfono debe tener exactamente 10 dígitos.")
+                        continue
+                else:
+                    correo = input("Indícame tu correo de contacto (formato nombre@dominio.com): ")
+                    if re.search(Email_RE, correo or ""):
+                        contacto_valor = correo
+                        print("Correo válido ✓")
+                        break
+                    else:
+                        print("El correo no es válido. Intenta nuevamente o escribe 'cancelar'.")
+                        continue
+            if state == 90:
+                # Usuario canceló durante contacto
+                continue
 
             print("\nResumen de tu reporte:")
-            print(f"   • Referencia (línea/cuenta): {ref}")
+            print(f"   • Referencia (línea/cuenta): {ref_digits}")
             print(f"   • Domicilio: {direccion}")
             print(f"   • Falla: {descripcion}")
             print(f"   • Horario preferente: {horario}")
